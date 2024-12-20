@@ -1,3 +1,2 @@
-version https://git-lfs.github.com/spec/v1
-oid sha256:93c332251e84d7dff23f9e8b634a797c05bedca6eed04c5e95af2ed8e0954934
-size 66
+
+![屏幕截图 2024-08-17 195000](https://github.com/user-attachments/assets/caa8b302-1710-445f-b63a-db3c1f87778b)
