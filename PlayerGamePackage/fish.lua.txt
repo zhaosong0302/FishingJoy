@@ -1,0 +1,138 @@
+-- 1.1 点击宝箱领取金币太拥挤
+
+print("success")
+local GameObject = CS.UnityEngine.GameObject
+local Vector3 = CS.UnityEngine.Vector3
+local Quaternion = CS.UnityEngine.Quaternion
+local Input = CS.UnityEngine.Input
+local EventSystems = CS.UnityEngine.EventSystems
+
+xlua.hotfix(CS.Treasour, 'CreatePrize', function(self)
+	for i=0,4,1 do
+	print("success")
+	local go = GameObject.Instantiate(self.gold, self.transform.position + Vector3(-10 + i*50,0,0), self.transform.rotation)
+	go.transform.SetParent(go.transform, self.cavas)
+
+	local go1 = GameObject.Instantiate(self.diamands, self.transform.position + Vector3(0,50,0) + Vector3(-10 + i*50,0,0), self.transform.rotation)
+	go1.transform.SetParent(go1.transform, self.cavas)
+	end
+	end)
+
+--***********************************************************
+
+	-- 1.1 玩家金币钻石不够处理
+	
+	xlua.private_accessible(CS.Gun)
+	xlua.hotfix(CS.Gun, 'Attack', function(self) 
+			if Input.GetMouseButtonDown(0)	then
+
+				-- 1.2 与UI交互时不能发射子弹
+
+				if EventSystems.EventSystem.current:IsPointerOverGameObject()	then
+					return 
+				end
+
+--[[
+				if self.gold < 1+(self.gunLevel-1)*2 or gold == 0 then 
+					return
+				end
+--]]
+
+-- 1.3 炮台三太强问题
+
+				if self.gunLevel == 3 and self.diamands < 3 then
+					return 
+				elseif self.gunLevel ~= 3	then
+					if self.gold < 1+(self.gunLevel-1)*2 or gold == 0 then 
+						return
+					end
+				end
+
+				self.bullectAudio.clip = self.bullectAudios[self.gunLevel - 1]
+				self.bullectAudio:Play()
+
+			if	self.Butterfly	then
+				GameObject.Instantiate(self.Bullect[self.gunLevel - 1], self.attackPos.position, 
+				self.attackPos.rotation*Quaternion.Euler(0,0,20))
+				GameObject.Instantiate(self.Bullect[self.gunLevel - 1], self.attackPos.position, 
+				self.attackPos.rotation*Quaternion.Euler(0,0,-20))
+			end
+
+			GameObject.Instantiate(self.Bullects[self.gunLevel - 1], self.attackPos.position, self.attackPos.rotation)
+
+			if not self.canShootForFree	then
+				if self.gunLevel == 3 then
+					self:DiamandsChange(-3)
+				else 
+					self:GoldChange(-1-(self.gunLevel - 1)*2)
+				end
+				
+			end
+			self.attackCD = 0
+			self.attack = false
+
+		end
+	end)
+
+	--***********************************************************
+
+	-- 1.2 技能和钻石太多
+
+	xlua.private_accessible(CS.Fire)
+	xlua.hotfix(CS.Fire, 'Start', function(self)
+		self.reduceDiamands = 8
+	end)
+
+	xlua.private_accessible(CS.Ice)
+	xlua.hotfix(CS.Ice, 'Start', function(self)
+		self.reduceDiamands = 8
+	end)
+
+	xlua.private_accessible(CS.ButterFly)
+	xlua.hotfix(CS.ButterFly, 'Start', function(self)
+		self.reduceDiamands = 5
+	end)
+
+--****************************************************
+
+-- 1.2 boss撞击问题
+
+local util = require 'util'
+
+xlua.private_accessible(CS.Boss)
+util.hotfix_ex(CS.Boss, 'Start', function(self)
+	self.Start(self)
+	self.m_reduceGold = self.m_reduceGold - 20
+end)
+
+xlua.private_accessible(CS.DeffendBoss)
+util.hotfix_ex(CS.DeffendBoss, 'Start', function(self)
+	self.Start(self)
+	self.m_reduceGold = self.m_reduceGold - 30
+end)
+
+xlua.private_accessible(CS.InvisibleBoss)
+util.hotfix_ex(CS.InvisibleBoss, 'Start', function(self)
+	self.Start(self)
+	self.m_reduceDiamond = self.m_reduceDiamond - 5
+end)
+
+--*******************************************
+
+-- 1.3 钻石金币负数问题
+
+util.hotfix_ex(CS.Gun, 'GoldChange', function(self, number)
+	self.GoldChange(self, number)
+	if self.gold < -number 	then
+		self.gold = 0
+		return
+	end
+end)
+
+util.hotfix_ex(CS.Gun, 'DiamandsChange', function(self, number)
+	self.DiamandsChange(self, number)
+	if self.diamands < -number 	then
+		self.diamands = 0
+		return
+	end
+end)
